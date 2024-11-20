@@ -1,0 +1,741 @@
+include irvine32.inc
+.data
+;----------fatima .data --------------
+msg byte "Please enter number of items for your medical store",0
+msg1 byte "Enter names of item ",0
+msg2 byte "Enter quantity of item ",0
+msg3 byte "Enter price of item ",0
+msg7 byte "Enter total budget: ",0
+msg4 byte "          Item      quantity     price",0
+msg8 byte  "exit",0
+index dword  1
+sto_qua dword 100 DUP(0)
+sto_name dword 1000 DUP($),0
+sto_price dword 100 DUP(?)
+count dword 0
+totalbudget dword 0
+spc byte "         ",0
+profit dword ?
+;-----------------------------------------------------------
+
+;-----------------najaah .data-------------
+password byte "abcd1234"
+welcome1 byte"-------------------------------------------------------------------------------------------------------------",0
+welcome byte"-----------------------------------------------WELCOME!------------------------------------------------------",0
+welcome2 byte"-------------------------------------------------------------------------------------------------------------",0
+
+welcome5 byte"-----------------------------------------------WELCOME CUSTOMER!----------------------------------------------",0
+welcome6 byte"-----------------------------------------------WELCOMEBACK ADMIN!---------------------------------------------",0
+
+txt1 byte "Admin please enter the password to access the program",0
+txt2 byte "incorrect password please enter again",0
+txt3 byte "correct password",0
+txt4 byte "you have exceeded the maximum number of tries you can no longer access the program",0
+
+txt5 byte "Your entered amount for the item exceeds the quantitiy",0
+txt6 byte " the amount we have availble: ",0
+txt7 byte "do you want to purchase the amount or not enter 1 for yes and enter 2 for no",0
+bool dword ?
+storedpassword byte 100 dup(?),0
+;---------------------------------------------------------------------------------
+
+;-----------ammar .data--------------------
+totalbill dword 0
+countdword dword 4
+plat dword 111
+gold dword 222 
+silver dword 333
+voucher dword 555
+str1 BYTE "Do you have any Platinum, Gold, Silver card that you wish to use as discount? Or if you have any voucher that you wish to claim. Press 1 for yes and enter code, Press 2 to exit. ",0
+str2 BYTE "Enter Platinum,gold,silver or voucher code : ",0
+str3 BYTE "Invalid code,Please enter again ",0
+str4 BYTE "Too many attempts made, You cannot claim discount now. ",0
+str5 BYTE "You have used a Platinum discount. Congratulations, you get a 50% discount ",0
+str6 BYTE "You have used a gold discount. Congratulations, you get a 30% discount ",0
+str7 BYTE "You have used a silver discount. Congratulations, you get a 15% discount ",0
+str8 BYTE "You have used a voucher discount. Congratulations, you get a 10% discount ",0
+str9 BYTE "Your total bill is : ",0
+str10 BYTE "Enter medicine number that you want to buy as displayed above : ",0
+str11 BYTE "Enter amount you want to buy for the corresponding medicine : ",0
+userquantity dword ?
+countattempts dword ?
+userinput dword ?
+userinputamount dword ?
+stock dword 100 dup (?)
+p dword ?
+;price for those inputs that user gives us
+userdesiredprice dword 100 dup (?)
+str14 BYTE "Your net profit generated is : ",0
+str15 BYTE "You have suffered a loss! Your total loss is : ",0
+counter dword 0
+str16 BYTE "Wrong Input! Please re-enter ",0
+;-------------------------------------------------------
+.code
+main proc
+
+;mov edx, offset welcome1
+;call writestring
+;call crlf
+mov edx, offset welcome
+call writestring
+call crlf
+;mov edx, offset welcome2
+;call writestring
+;call crlf
+mov esi,offset sto_qua
+mov esi,0
+;password check
+call passwordcheck
+
+;admin input
+call clrscr
+
+mov edx, offset welcome1
+call writestring
+call crlf
+mov edx, offset welcome5
+call writestring
+call crlf
+mov edx, offset welcome2
+call writestring
+
+
+push offset sto_qua
+push offset sto_price
+call menuinput
+
+
+;display menu
+call displaymenu
+
+pop ecx
+pop ecx
+
+;customer input (innner function -stock check)
+inc count
+call customerinput
+
+;billing_calc (inner function- check discount)
+
+
+mov eax,0
+mov ebx,0
+mov ecx,0
+mov edx,0
+
+push counter
+push offset stock
+push offset userdesiredprice
+call billingcalculation
+pop ecx
+pop ecx
+pop ecx
+mov ecx,0
+;user interface ended
+
+
+
+;call password check for admin again
+call crlf
+call passwordcheck
+call crlf
+call crlf
+mov ebx,totalbudget
+mov eax,totalbill
+cmp eax,ebx
+jge t4
+mov edx,offset str15
+call writestring
+sub ebx,eax
+mov eax,ebx
+;display loss
+call writedec
+jmp t6
+t4:
+mov edx,offset str14
+call writestring
+sub eax,ebx
+;display profit
+call writedec
+t6:
+call crlf
+call crlf
+
+
+exit
+main ENDP
+
+;password checking function
+passwordcheck PROC
+;asks password in the fucntion 
+mov eax, 0
+mov ecx,0
+mov edx,0
+mov ebx,0
+
+mov edx, offset txt1
+call writestring
+call crlf
+mov edx,offset storedpassword
+mov ecx,100
+call readstring
+call crlf
+mov ebx,0
+mov ebx,0
+mov eax,0
+
+
+
+checker:
+cld
+mov esi, offset storedpassword
+mov edi, offset password
+mov ecx,0
+mov ecx, lengthof password 
+;compares correct password 
+
+repe cmpsb
+jb incorrect
+ja incorrect
+jmp correct
+
+
+
+incorrect:
+
+mov al,3
+cmp bl,al
+je maxtries
+inc bl
+mov edx, offset txt2
+call writestring
+call crlf
+mov ecx,100
+mov edx, offset storedpassword
+call readstring
+jmp checker
+
+
+correct:
+mov edx,0
+mov edx, offset txt3
+call writestring
+jmp endfunction
+
+maxtries:
+mov edx,0
+mov edx, offset txt4
+call writestring
+exit
+
+
+endfunction:
+mov eax, 0
+mov ecx,0
+mov edx,0
+mov ebx,0
+ret 
+passwordcheck ENDP
+
+
+
+
+menuinput proc
+enter 0,0
+call crlf
+jmp p56
+l63:
+mov edx,offset str16
+call writestring
+call crlf
+p56:
+mov edx,offset msg
+call writestring
+call crlf
+call readdec
+cmp eax,0
+jle l63
+mov ecx,eax
+mov count,ecx
+jmp p57
+l64:
+mov edx,offset str16
+call writestring
+call crlf
+p57:
+mov edx,offset msg7
+call writestring
+call readdec
+cmp eax,0
+jle l64
+mov totalbudget,eax
+
+;item name
+mov esi,offset sto_name
+;item price
+mov ebx,[ebp+8]
+mov edi,[ebp+12]
+mov esi,offset sto_name
+
+g1:
+mov edx,offset msg1
+call writestring
+call crlf
+push ecx
+mov ecx,100
+mov edx,esi
+call readstring
+pop ecx
+add esi,8
+jmp p58
+l65:
+mov edx,offset str16
+call writestring
+call crlf
+p58:
+mov edx,offset msg2
+call writestring
+call crlf
+mov eax,0
+call readdec
+cmp eax,0
+jle l65
+mov [edi],eax
+add edi,4
+jmp p59
+l66:
+mov edx,offset str16
+call writestring
+call crlf
+p59:
+mov edx,offset msg3
+call writestring
+call crlf
+mov eax,0
+call readdec
+cmp eax,0
+jle l66
+mov [ebx],eax
+add ebx,4
+dec ecx
+cmp ecx,0
+je enddd
+jmp g1
+
+enddd:
+
+mov esi,offset sto_name
+mov ecx,counT
+
+leave
+ret
+menuinput endp
+
+displaymenu proc
+enter 0,0
+
+;item price
+mov ebx,[ebp+8]
+
+;item quantity
+mov edi,[ebp+12]
+
+mov edx,offset msg4
+call writestring
+call crlf
+mov ecx,count
+
+mov esi,offset sto_name
+
+g2:
+
+;printing index
+mov eax,index
+call writedec
+inc index
+
+;printing space
+mov edx,offset spc
+call writestring
+
+
+;printing name
+mov edx,esi
+call writestring
+add esi,8
+
+;printing space
+mov edx,offset spc
+call writestring
+
+;print quantity
+MOV EAX,[EDI]
+CALL writedec
+ADD EDI,4
+
+;printing space
+mov edx,offset spc
+call writestring
+
+;print price
+MOV EAX,[EBX]
+CALL writedec
+ADD EBX,4
+
+call crlf
+
+loop g2
+
+mov eax,index
+call writedec
+inc index
+mov edx,offset spc
+call writestring
+mov edx,offset msg8
+call writestring
+leave
+ret
+displaymenu endp
+
+
+;--------------------------------CUSTOMER INPUT-----------------------
+Customerinput proc
+
+mov esi,offset stock
+mov ebx,offset userdesiredprice
+e4:
+push ebx
+
+jmp j24
+
+l67:
+mov edx,offset str16
+call writestring
+call crlf
+j24:
+mov eax,0
+call crlf
+mov edx,offset str10
+call writestring
+call readdec
+mov userinput,eax
+cmp eax,count
+je over
+
+jg l67
+
+cmp eax,0
+jle l67
+;increase counter 
+inc counter
+;dec userinput for index
+dec userinput
+push userinput
+
+jmp b15
+
+l68:
+mov edx,offset str16
+call writestring
+call crlf
+b15:
+mov edx,offset str11
+call writestring
+call readdec
+cmp eax,0
+jle l68
+mov userinputamount,eax
+push userinputamount
+
+
+call stockcheck
+;user decides not to buy
+pop ecx
+pop ecx
+pop ebx
+cmp bool,0
+je done12
+;user buys as indicated his amount
+cmp bool,2
+je e6
+;user buys max stock limit
+mov edi,offset sto_price
+mov ecx,userinput
+cmp ecx,0
+je k15
+p17:
+add edi,type dword
+loop p17
+k15:
+mov ecx,[edi]
+mov [ebx],ecx
+add ebx,type dword
+mov ecx,userinput
+mov edi,offset sto_qua
+cmp ecx,0
+je g9
+e10:
+add edi,4
+loop e10
+g9:
+mov edx,[edi]
+mov [esi],edx
+mov edx,0
+mov [edi],edx
+add esi,type dword
+jmp done12
+e6:
+mov edi,offset sto_price
+mov ecx,userinput
+cmp ecx,0
+je k13
+p14:
+add edi,type dword
+loop p14
+k13:
+mov ecx,[edi]
+mov [ebx],ecx
+add ebx,type dword
+mov ecx, userinput
+mov edi, offset sto_qua
+cmp ecx,0
+je g10
+e15:
+add edi,4
+loop e15
+g10:
+mov edx,userinputamount
+mov [esi],edx
+mov edx,[edi]
+sub edx,userinputamount
+mov [edi],edx
+add esi,type dword
+done12:
+jmp e4
+over:
+pop eax
+MOV ECX,[ESP]
+ret
+Customerinput endp
+
+
+stockcheck PROC
+push ebp
+mov ebp,esp
+mov ecx,0
+mov ecx, [ebp+12]; index of stock array
+mov ebx,0
+mov ebx,[ebp+8]; quantity requested for that item
+mov edi, offset sto_qua
+mov eax,0
+cmp ecx,0
+je l11
+l1:
+add edi,4
+loop l1
+l11:
+mov eax, [edi]
+cmp ebx,eax
+ja asktochange
+jbe inrange
+
+
+asktochange:
+mov eax,0
+mov edx, offset txt5
+call writestring
+call crlf
+
+
+mov edx, offset txt6
+call writestring
+mov eax,0
+mov eax,[edi]
+call writedec
+call crlf
+jmp p61
+l70:
+mov edx,offset str16
+call writestring
+call crlf
+p61:
+mov edx, offset txt7
+call writestring
+call crlf
+call readdec
+cmp ax,1
+je yes
+cmp eax, 2
+je no
+jmp l70
+
+
+inrange:
+mov eax,0
+mov eax,2
+mov bool,eax
+jmp endofproc
+
+yes:
+mov eax,0
+mov eax,1
+mov bool,1
+jmp endofproc
+
+
+no:
+mov eax,0
+mov bool,eax
+
+endofproc:
+pop ebp
+ret 
+stockcheck ENDP
+
+
+;////////////////////////////---------BILLINGCALC----------///////////////////////////////
+
+
+billingcalculation proc
+;ebp+8===offset price
+;ebp+12===offset quantity
+;ebp+16===countdword
+call crlf
+call crlf
+push ebp
+mov ebp,esp
+mov edi,[ebp+8]
+mov ebx,[ebp+12]
+mov ecx,[ebp+16]
+e1:
+push ecx
+mov eax,[edi]
+mov ecx,[ebx]
+mul ecx
+
+add totalbill,eax
+add edi,type dword
+add ebx,type dword
+pop ecx
+loop e1
+jmp m62
+l71:
+mov edx,offset str16
+call writestring
+call crlf
+m62:
+mov edx,offset str1
+call writestring
+call readdec
+call crlf
+call crlf
+cmp eax,2
+je done
+cmp eax,1
+je n62
+jmp l71
+n62:
+call checkdiscount
+done:
+mov eax,totalbill
+mov edx,offset str9
+call writestring
+call writedec
+call crlf
+call crlf
+mov esp,ebp
+
+pop ebp
+ret
+billingcalculation endp
+
+
+
+
+checkdiscount proc
+
+
+
+o1:
+call crlf 
+call crlf
+mov edx,offset str2
+call writestring
+call readdec
+cmp eax,plat
+je platgo
+cmp eax,gold
+je goldgo
+cmp eax,silver
+je silvergo
+cmp eax,voucher
+je vouchergo
+inc countattempts
+cmp countattempts,3
+jge l9
+call crlf
+call crlf
+mov edx,offset str3
+call writestring
+call crlf
+jmp o1
+l9:
+mov edx,offset str4
+call writestring
+call crlf
+call crlf
+jmp done
+platgo:
+mov edx,offset str5
+call writestring
+call crlf
+call crlf
+mov ecx,5
+mov ebx,10
+mov eax,totalbill
+mul ecx
+div ebx
+sub totalbill,eax
+jmp done
+goldgo:
+mov edx,offset str6
+call writestring
+call crlf
+call crlf
+mov ecx,3
+mov ebx,10
+mov eax,totalbill
+mul ecx
+div ebx
+sub totalbill,eax
+jmp done
+silvergo:
+mov edx,offset str7
+call writestring
+call crlf
+call crlf
+mov ecx,15
+mov ebx,100
+mov eax,totalbill
+mul ecx
+div ebx
+sub totalbill,eax
+jmp done
+vouchergo:
+mov edx,offset str8
+call writestring
+call crlf
+call crlf
+mov ecx,1
+mov ebx,10
+mov eax,totalbill
+mul ecx
+div ebx
+sub totalbill,eax
+jmp done
+done:
+ret
+checkdiscount endp
+
+
+END main
